@@ -1,14 +1,12 @@
-import FARM_DATA from "../../data/farm-data-compressed"
 import React from "react";
 import MUIDataTable, { ExpandButton } from "mui-datatables";
-import TableRow from "@material-ui/core/TableRow";
 import TableCell from "@material-ui/core/TableCell";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 
 import LineChart from "../../components/line-chart.component"
+import LineChartList from "../../components/line-chart-list.component"
 
-import SubTable from '../../components/subtable.component';
-import SUBTABLE_DATA from "../../data/subtable-data"
+import SubTableList from '../../components/subtable-list.component'
 
 import './mainpage.styles.css'
 import CHART_DATA from "../../data/chart-data";
@@ -39,7 +37,7 @@ class MainPage extends React.Component {
         const { container : data_container } = await database.container("milk-daily-data").read();
         const { container : preds_container } = await database.container("mastitis-predictions").read();
 
-        const query = "SELECT DISTINCT c.Animal_ID, c.Group_ID from c";
+        const query = "SELECT DISTINCT c.Animal_ID from c";
 
         const { resources : cows } = await data_container.items
         .query(query)
@@ -50,22 +48,28 @@ class MainPage extends React.Component {
         const res = []
         
         for (const cow of cows){
-          const {Animal_ID, Group_ID} = cow ;
+          const {Animal_ID} = cow ;
           const query = `SELECT * FROM c WHERE c.Animal_ID = "${Animal_ID}" ORDER BY c.datesql DESC OFFSET 0 LIMIT 1`
           console.log(query);
           const { resources : pred_arr } = await preds_container.items
           .query(query)
           .fetchAll();
           console.log(pred_arr);
-          const [pred] = pred_arr;
-          const arr = [Animal_ID, Group_ID, pred.datesql, pred.prediction]
-          res.push(arr);
+          if (pred_arr.length !== 0){
+            const [pred] = pred_arr;
+            const arr = [Animal_ID, pred.datesql, pred.prediction]
+            res.push(arr);
+          }
+          else {
+            const arr = [Animal_ID];
+            res.push(arr);
+          }
         }
         this.setState({"farm_data": res});
 
      }
-     catch {
-       console.log("COSMOS ERROR");
+     catch (error) {
+      console.error(error);
      }
   }
 
@@ -77,13 +81,6 @@ class MainPage extends React.Component {
         options: {
           filter: false,
           searchable: true
-        }
-      },
-      {
-        name: "Group Number",
-        options: {
-          filter: true,
-          searchable: false
         }
       },
       {
@@ -104,9 +101,7 @@ class MainPage extends React.Component {
 
     // Data is currently hardcoded
     const data = this.state.farm_data;
-    const subtables = SUBTABLE_DATA
     const chartdata = CHART_DATA
-    console.log(subtables);
 
     const options = {
       search: true,
@@ -127,18 +122,11 @@ class MainPage extends React.Component {
         return (
           <TableCell colSpan={colSpan}>
             <TableCell colSpan={colSpan}>
-              {subtables[id].map(({ ...props }) => (
-                <SubTable {...props}></SubTable>
-              ))}
+              <SubTableList id = {id} ></SubTableList>
             </TableCell>
             <TableCell colSpan={colSpan}>
-
               <h2> Trends </h2>
-              <div className='grid-container'>
-                {chartdata[id].map(({ ...props }) => (
-                  <LineChart {...props}></LineChart>
-                ))}
-              </div>
+              <LineChartList id = {id}></LineChartList>
             </TableCell>
           </TableCell>
 

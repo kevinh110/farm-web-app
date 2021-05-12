@@ -5,7 +5,30 @@ class LineChart extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = {
+
+    let series = []
+    if (Array.isArray(this.props.ydata[0])){
+      series = [
+        {
+        name: 'Protein', // Bad code :(
+        data: this.props.ydata[0]
+        },
+        {
+        name: 'Fat',
+        data: this.props.ydata[1]
+        }
+      ]
+    }
+    else {
+      series = [
+        {
+          name: this.props.title,
+          data: this.props.ydata
+        }
+      ]
+    }
+
+    this.state =  {
       options: {
         chart: {
           id: this.props.title,
@@ -29,13 +52,13 @@ class LineChart extends React.Component {
           },
       }
       },
-      series: [{
-        name: 'series-1',
-        data: this.props.ydata
-      }]
+      series: series
     }
   }
+
+  
   render() {
+    
     return (
       <Chart
       options={this.state.options}
