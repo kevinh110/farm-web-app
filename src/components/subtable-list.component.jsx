@@ -8,27 +8,16 @@ class SubTableList extends React.Component {
       this.state = { 
         'status_data': [],
         'preds_data': [],
-        'data_data': [] // LOL Name...
+        'data_data': [], // LOL Name...
       };
     }
 
     async componentDidMount(){
       try {
  
-       const { CosmosClient } = require("@azure/cosmos");
-       const endpoint = "https://dairy-project-cosmos.documents.azure.com:443";
-       const key = "WNLJbEHT9NTWL9wGygnQMvzX2JUJo5Iv72OPoba9dTyKfbVrf1FjK6vY3XXaN8BPsQ5iC5UTkOQLVJ8UIBEk4A==";
-       const client = new CosmosClient({endpoint, key, 
-         connectionPolicy: {
-           enableEndpointDiscovery: false
-         }});
  
- 
-         const { database } = await client.database("dairy-project-database").read();
-         const { container : data_container } = await database.container("milk-daily-data").read();
-         const { container : preds_container } = await database.container("mastitis-predictions").read();
- 
-        const query = `SELECT * FROM c WHERE c.Animal_ID = "${this.props.id}" ORDER BY c.datesql DESC OFFSET 0 LIMIT 1`
+        const {data_container, preds_container, id} = this.props
+        const query = `SELECT * FROM c WHERE c.Animal_ID = "${id}" ORDER BY c.datesql DESC OFFSET 0 LIMIT 1`
 
          const { resources : cow_arr } = await data_container.items
          .query(query)
@@ -48,12 +37,13 @@ class SubTableList extends React.Component {
          this.setState({ 
           'status_data': status_arr,
           'preds_data': predictions_arr,
-          'data_data': data_arr // LOL Name...
+          'data_data': data_arr, // LOL Name...
         });
+
          
       }
-      catch {
-        console.log("COSMOS ERROR");
+      catch (error) {
+        console.error(error);
       }
    }
    render (){

@@ -3,20 +3,18 @@ import MUIDataTable, { ExpandButton } from "mui-datatables";
 import TableCell from "@material-ui/core/TableCell";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 
-import LineChart from "../../components/line-chart.component"
 import LineChartList from "../../components/line-chart-list.component"
-
 import SubTableList from '../../components/subtable-list.component'
 
 import './mainpage.styles.css'
-import CHART_DATA from "../../data/chart-data";
-
 
 class MainPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = { 
-      'farm_data': []
+      'farm_data': [],
+      'data_container': null,
+      'preds_container': null
      };
   }
 
@@ -33,7 +31,6 @@ class MainPage extends React.Component {
 
 
         const { database } = await client.database("dairy-project-database").read();
-        console.log(database);
         const { container : data_container } = await database.container("milk-daily-data").read();
         const { container : preds_container } = await database.container("mastitis-predictions").read();
 
@@ -42,7 +39,6 @@ class MainPage extends React.Component {
         const { resources : cows } = await data_container.items
         .query(query)
         .fetchAll();
-        console.log(cows);
 
         // Get date and last updated
         const res = []
@@ -50,11 +46,9 @@ class MainPage extends React.Component {
         for (const cow of cows){
           const {Animal_ID} = cow ;
           const query = `SELECT * FROM c WHERE c.Animal_ID = "${Animal_ID}" ORDER BY c.datesql DESC OFFSET 0 LIMIT 1`
-          console.log(query);
           const { resources : pred_arr } = await preds_container.items
           .query(query)
           .fetchAll();
-          console.log(pred_arr);
           if (pred_arr.length !== 0){
             const [pred] = pred_arr;
             const arr = [Animal_ID, pred.datesql, pred.prediction]
@@ -65,7 +59,11 @@ class MainPage extends React.Component {
             res.push(arr);
           }
         }
-        this.setState({"farm_data": res});
+        this.setState({
+          "farm_data": res,
+          "data_container": data_container,
+          "preds_container": preds_container
+        });
 
      }
      catch (error) {
@@ -99,9 +97,8 @@ class MainPage extends React.Component {
       }
     ];
 
-    // Data is currently hardcoded
     const data = this.state.farm_data;
-    const chartdata = CHART_DATA
+    const {data_container, preds_container} = this.state
 
     const options = {
       search: true,
@@ -122,11 +119,11 @@ class MainPage extends React.Component {
         return (
           <TableCell colSpan={colSpan}>
             <TableCell colSpan={colSpan}>
-              <SubTableList id = {id} ></SubTableList>
+              <SubTableList id = {id} data_container = {data_container} preds_container = {preds_container} ></SubTableList>
             </TableCell>
             <TableCell colSpan={colSpan}>
               <h2> Trends </h2>
-              <LineChartList id = {id}></LineChartList>
+              <LineChartList id = {id} data_container = {data_container} ></LineChartList>
             </TableCell>
           </TableCell>
 

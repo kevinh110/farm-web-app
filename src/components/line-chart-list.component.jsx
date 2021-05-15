@@ -16,22 +16,9 @@ class LineChartList extends React.Component{
 
   async componentDidMount(){
     try {
+      const {data_container, id} = this.props;
 
-     const { CosmosClient } = require("@azure/cosmos");
-     const endpoint = "https://dairy-project-cosmos.documents.azure.com:443";
-     const key = "WNLJbEHT9NTWL9wGygnQMvzX2JUJo5Iv72OPoba9dTyKfbVrf1FjK6vY3XXaN8BPsQ5iC5UTkOQLVJ8UIBEk4A==";
-     const client = new CosmosClient({endpoint, key, 
-       connectionPolicy: {
-         enableEndpointDiscovery: false
-       }});
-
-
-       const { database } = await client.database("dairy-project-database").read();
-       const { container : data_container } = await database.container("milk-daily-data").read();
-
-      const query = `SELECT * FROM c WHERE c.Animal_ID = "${this.props.id}" ORDER BY c.datesql`
-
-
+      const query = `SELECT * FROM c WHERE c.Animal_ID = "${id}" ORDER BY c.datesql`
 
        const { resources : cow_arr } = await data_container.items
        .query(query)
